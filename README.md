@@ -1,10 +1,15 @@
 # Mathe-Heft
 
-Mathe-Übungs-App im Schulheft-Design mit Eltern-Login und Kinderprofilen, die
-geräteübergreifend synchron sind (Laptop, Tablet, Handy).
+Lern-App im Schulheft-Design mit Eltern-Login und Kinderprofilen, die
+geräteübergreifend synchron sind (Laptop, Tablet, Handy). Zwei Module:
+
+1. **Mathe-Übungen** – Rechenblöcke mit Noten, Bestzeiten und Belohnungen
+2. **Geschichten hören** – KI-generierte Vorlesegeschichten (Tagesthema oder
+   fortlaufende Serie mit frei wählbaren Hauptfiguren)
 
 - **Frontend:** Next.js (App Router)
 - **Backend/Auth/DB:** Supabase (Postgres + Supabase Auth)
+- **KI-Texte:** Google Gemini API (nur für das Geschichten-Modul, kostenlose Nutzungsstufe)
 - **Hosting:** Vercel
 
 Der komplette Code ist fertig. Es fehlen nur noch dein eigenes Supabase-Projekt
@@ -31,6 +36,15 @@ tun musst.
    - **Redirect URLs:** `http://localhost:3000/reset-password` (und später zusätzlich die Vercel-Variante)
 
    Das ist nötig, damit der "Passwort vergessen"-Link in der E-Mail korrekt zurück zur App führt.
+7. Öffne im **SQL Editor** eine weitere **New query**, füge den Inhalt von
+   [`supabase/schema_stories.sql`](supabase/schema_stories.sql) ein und klicke **Run**.
+   Das legt die Tabellen für das Geschichten-Modul (`story_sagas`, `story_chapters`) an.
+
+## 1b. Gemini-API-Key besorgen (für das Geschichten-Modul, kostenlos)
+
+1. Gehe auf [aistudio.google.com/apikey](https://aistudio.google.com/apikey) und logge dich mit einem Google-Konto ein.
+2. Klicke **"Create API key"** (keine Kreditkarte nötig, kostenlose Nutzungsstufe).
+3. Kopiere den angezeigten Key.
 
 ## 2. Lokal einrichten
 
@@ -38,11 +52,12 @@ tun musst.
 cp .env.local.example .env.local
 ```
 
-Trage in `.env.local` die Werte aus Schritt 1.5 ein:
+Trage in `.env.local` die Werte aus Schritt 1.5 sowie den Gemini-Key ein:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://dein-projekt.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=dein-anon-key
+GEMINI_API_KEY=dein-gemini-key
 ```
 
 Dann starten:
@@ -77,9 +92,10 @@ git push -u origin main
 
 1. Erstelle ein Konto auf [vercel.com](https://vercel.com) (Login via GitHub empfohlen).
 2. **"Add New… → Project"** → das eben gepushte GitHub-Repo importieren.
-3. Bei **Environment Variables** die gleichen zwei Werte wie in `.env.local` eintragen:
+3. Bei **Environment Variables** die gleichen drei Werte wie in `.env.local` eintragen:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `GEMINI_API_KEY`
 4. **Deploy** klicken. Nach ein paar Minuten bekommst du eine feste URL wie
    `https://mathe-heft.vercel.app`.
 5. Zurück in Supabase unter **Authentication → URL Configuration**: die Vercel-URL
@@ -91,17 +107,22 @@ Ab jetzt löst jeder `git push` auf `main` automatisch ein neues Deployment aus.
 ## Projektstruktur
 
 ```
-lib/gameEngine.js       Reine Spiel-Logik (Aufgaben-Generator, Noten, Zeiten) – 1:1 aus dem Original übernommen
-lib/data.js              Datenzugriff (Profile, Sessions, Bestzeiten) über Supabase
-lib/supabase/            Supabase-Client für Browser, Server Components und Middleware
-middleware.js            Schützt alle Seiten ausser /login, /register, /forgot-password, /reset-password
+lib/gameEngine.js          Reine Spiel-Logik (Aufgaben-Generator, Noten, Zeiten)
+lib/storyEngine.js         Themen/Lesestufen-Konfiguration + Prompt-Bausteine fürs Geschichten-Modul
+lib/gemini.js               Server-seitiger Gemini-API-Client (Geheimnis bleibt auf dem Server)
+lib/data.js                 Datenzugriff (Profile, Sessions, Bestzeiten, Geschichten) über Supabase
+lib/storyApi.js             Client-Fetch-Helfer für die Story-API-Routen
+lib/supabase/               Supabase-Client für Browser, Server Components und Middleware
+proxy.js                    Schützt alle Seiten ausser /login, /register, /forgot-password, /reset-password
 app/login, /register,
 /forgot-password,
-/reset-password           Auth-Seiten
-app/page.js               Lädt den eingeloggten Nutzer, rendert AppShell
-components/AppShell.js    Screen-Steuerung (Profile → Menü → Üben → Ergebnis → Statistik → Belohnungen)
-components/*Screen.js     Die einzelnen Bildschirme, strukturell identisch zum Original
-supabase/schema.sql       Datenbank-Schema + Row Level Security
+/reset-password              Auth-Seiten
+app/api/stories/*            API-Routen, die die Gemini-API aufrufen und Ergebnisse in Supabase speichern
+app/page.js                  Lädt den eingeloggten Nutzer, rendert AppShell
+components/AppShell.js       Screen-Steuerung für beide Module
+components/*Screen.js        Die einzelnen Bildschirme
+supabase/schema.sql          Datenbank-Schema Mathe-Modul + Row Level Security
+supabase/schema_stories.sql  Datenbank-Schema Geschichten-Modul + Row Level Security
 ```
 
 ## Familien-Konzept

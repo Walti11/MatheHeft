@@ -254,3 +254,14 @@ a {
 
 /* Loading */
 .mh-loading-page { display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+
+/* Geschichten */
+.mh-story-list-item {
+  width: 100%; border: none; cursor: pointer; justify-content: space-between;
+  font-family: 'Nunito', sans-serif;
+}
+.mh-story-text {
+  font-family: 'Kalam', cursive; font-size: 19px; line-height: 1.7; color: var(--ink-dark);
+}
+.mh-story-text p { margin-bottom: 14px; }
+.mh-story-text p:last-child { margin-bottom: 0; }

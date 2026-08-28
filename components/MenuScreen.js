@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilLine, BarChart3, Award } from "lucide-react";
+import { PencilLine, BarChart3, Award, BookOpen } from "lucide-react";
 import { nextReward } from "@/lib/gameEngine";
 
 export default function MenuScreen({ profile, points, onNav }) {
@@ -17,6 +17,10 @@ export default function MenuScreen({ profile, points, onNav }) {
         <button className="mh-menu-card" onClick={() => onNav("select")}>
           <PencilLine size={30} />
           <span>Rechnen starten</span>
+        </button>
+        <button className="mh-menu-card" onClick={() => onNav("stories")}>
+          <BookOpen size={30} />
+          <span>Geschichten hören</span>
         </button>
         <button className="mh-menu-card" onClick={() => onNav("stats")}>
           <BarChart3 size={30} />
